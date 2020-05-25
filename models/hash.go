@@ -3,8 +3,9 @@ package models
 import (
 	"errors"
 	"fmt"
+	"encoding/base64"
+    "crypto/sha256"
 	
-	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
@@ -27,10 +28,8 @@ func AddUser(u User) (User, error) {
 	if u.ID != 0 {
 		return User{}, errors.New("New User must not include id or it must be set to zero")
 	}
-	u.ID = nextID
-	/* hash, _ := HashPassword(u.Password)
-	u.Password = hash */
-	nextID++
+	u.ID = u.ID +1
+	u.Password = encryptPassword((u.Password))
 	users = append(users, &u)
 	return u, nil
 }
@@ -73,9 +72,7 @@ func getPwd(pasword string) []byte {
     return []byte(pasword)
 }
 
-func HashPassword(password string) (string, error) {
-    bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
-    return string(bytes), err
-}
-
-
+func encryptPassword(password string) string {
+    h := sha256.New()
+    return  string(base64.StdEncoding.EncodeToString(h.Sum([]byte(password))))
+} 
