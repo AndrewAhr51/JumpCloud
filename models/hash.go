@@ -21,8 +21,7 @@ type User struct {
 
 var (
 	users  []*User
-	nextID = 1
-)
+	)
 
 var cache = map[int] User{}
 
@@ -38,25 +37,30 @@ func AddUser(u User) (User, error) {
 	}
 
 	id := rand.Intn(42)
-
+	password := u.Password
 	u.ID = id
 	wg.Add(2)
 	go func(id int, wg *sync.WaitGroup) {
 		fmt.Println(u.ID)
 	}(id, wg)
 	
-	time.Sleep(5 * time.Second)
-	encryptedpassword := encryptPassword((u.Password))
-	fmt.Println(encryptedpassword)
-	t2 := time.Now()
-	fmt.Println(t2.Sub(t1))
-	u.Password = encryptedpassword
-	cache[u.ID] = u
-		
+	go func(password string, wg *sync.WaitGroup) {
+		time.Sleep(5 * time.Second)
+		encryptedpassword := encryptPassword((password))
+		fmt.Println(encryptedpassword)
+		t2 := time.Now()
+		fmt.Println(t2.Sub(t1))
+		u.Password = encryptedpassword
+		cache[id] = u
+		fmt.Println(cache[id])
+	} (password, wg)
+
 	return u, nil
 }
 
 func GetUserByID(id int) (User, error) {
+
+	return queryCache(id)
 	for _, u := range users {
 		if u.ID == id {
 			return *u, nil
@@ -71,7 +75,7 @@ func encryptPassword(password string) string {
     return  string(base64.StdEncoding.EncodeToString(h.Sum([]byte(password))))
 } 
 
- func queryCache(id int, m *sync.RWMutex) (User, bool) {
-	b, ok := cache[id]
-	return b, ok
+ func queryCache(id int) (User, error) {
+	b, _ := cache[id]
+	return b, nil
 } 
